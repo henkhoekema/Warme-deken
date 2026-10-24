@@ -1,0 +1,142 @@
+type: custom:button-card
+styles:
+  card:
+    - filter: |-
+        [[[ 
+          return states['device_tracker.sm_s721b'].state !== 'home'
+            ? 'grayscale(100%) opacity(50%)'
+            : '';
+        ]]]
+  grid:
+    - grid-template-areas: '"time plus" "time minus"'
+    - grid-template-columns: 3fr 1fr
+    - grid-template-rows: 1fr 1fr
+custom_fields:
+  time:
+    card:
+      type: custom:button-card
+      entity: timer.warme_deken_henk_off
+      layout: icon_name_state2nd
+      icon: mdi:bed-clock
+      show_name: true
+      show_icon: true
+      show_state: true
+      show_label: false
+      custom_fields:
+        state_text: |
+          [[[
+            if (states['input_boolean.warme_deken_henk_enabled'].state === 'on') {
+              return '<span style="color: red;">Aan</span>';
+            } else {
+              return '<span style="color: green;">Uit</span>';
+            }
+          ]]]
+      styles:
+        card:
+          - border: |-
+              [[[
+                return states['input_boolean.warme_deken_henk_enabled'].state === 'on'
+                  ? '2px solid red'
+                  : '2px solid green';
+              ]]]
+          - border-radius: 12px
+          - box-shadow: none
+          - margin: 0px
+        custom_fields:
+          state_text:
+            - justify-self: center
+            - align-self: center
+            - font-size: 16px
+            - text-align: center
+            - width: 100%
+            - height: 100%
+            - display: flex
+            - align-items: center
+            - justify-content: center
+            - transform: translateX(-80px)
+      name: Deken Henk
+      tap_action:
+        action: |-
+          [[[ 
+            return states['device_tracker.sm_s721b'].state === 'home'
+              ? 'call-service'
+              : 'none';
+          ]]]
+        confirmation:
+          text: Weet je zeker dat je de status van de deken wilt wijzigen?
+        service: input_boolean.toggle
+        service_data:
+          entity_id: input_boolean.warme_deken_henk_enabled
+      hold_action:
+        action: none
+  plus:
+    card:
+      type: custom:mushroom-template-card
+      entity: timer.warme_deken_henk_off
+      icon: mdi:plus
+      primary: 2 Min
+      tap_action:
+        action: |-
+          [[[ 
+            return states['device_tracker.sm_s721b'].state === 'home' &&
+                   states['timer.warme_deken_henk_off'].state !== 'idle'
+              ? 'call-service'
+              : 'none';
+          ]]]
+        service: script.add_time_to_timer_henk
+        service_data:
+          timer_entity: timer.warme_deken_henk_off
+          minutes: 2
+      icon_color: red
+      card_mod:
+        style: |
+          ha-card {
+            border: none;
+          }
+  minus:
+    card:
+      type: custom:mushroom-template-card
+      entity: input_boolean.warme_deken_henk_enabled
+      icon: mdi:minus
+      primary: 2 Min
+      tap_action:
+        action: |-
+          [[[
+            if (states['device_tracker.sm_s721b'].state !== 'home')
+              return 'none';
+
+            const timer = states['timer.warme_deken_henk_off'];
+
+            if (timer.state === 'idle')
+              return 'none';
+
+            const finish = new Date(timer.attributes.finishes_at);
+            const remaining = (finish - new Date()) / 1000;
+
+            return remaining >= 120 ? 'call-service' : 'none';
+          ]]]
+        service: timer.change
+        target:
+          entity_id: timer.warme_deken_henk_off
+        service_data:
+          duration: '-00:02:00'
+      icon_color: |-
+        [[[
+          if (states['device_tracker.sm_s721b'].state !== 'home')
+            return 'grey';
+
+          const timer = states['timer.warme_deken_henk_off'];
+
+          if (timer.state === 'idle')
+            return 'grey';
+
+          const finish = new Date(timer.attributes.finishes_at);
+          const remaining = (finish - new Date()) / 1000;
+
+          return remaining >= 120 ? 'blue' : 'grey';
+        ]]]
+      card_mod:
+        style: |
+          ha-card {
+            border: none;
+          }

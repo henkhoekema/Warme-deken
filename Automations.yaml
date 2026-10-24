@@ -1,0 +1,246 @@
+# ============================================================
+# WARME DEKEN HENK - AUTOMATIONS
+#
+# Werking in het kort:
+# - De deken wordt ingeschakeld via de input_boolean.
+# - Dit mag alleen als Henk thuis is ivm veiligheid (brand, kortsluiting),
+# - Zodra de stekker inschakelt, start een timer van 15 minuten.
+# - Als de timer afloopt, wordt de deken uitgeschakeld.
+# - Om 23:59 uur wordt de deken sowieso uitgeschakeld.
+# - Als de deken handmatig wordt uitgezet met de smart plug, wordt de timer
+#   geannuleerd en wordt de input_boolean teruggezet.
+# - De input_boolean kan ook worden gebruikt om de deken
+#   via een dashboard of andere automatisering te bedienen.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. WARME DEKEN HENK UIT
+#
+# Schakelt de deken uit zodra één van de volgende situaties
+# optreedt:
+# - Het is 23:59 uur.
+# - De timer is afgelopen.
+# - De input_boolean wordt uitgezet.
+#
+# De deken wordt alleen uitgeschakeld als de stekker op dat
+# moment daadwerkelijk aanstaat.
+# ------------------------------------------------------------
+- id: 'warme_deken_henk_uit'
+  alias: Warme deken Henk uit
+  initial_state: true
+  description: "De automatisering voor het uitschakelen ziet er als volgt uit:"
+
+  triggers:
+    # Uiterste uitschakeltijd: de deken mag niet de hele nacht
+    # ingeschakeld blijven, ook niet als de timer niet werkt.
+    - trigger: time
+      at: "23:59:00"
+
+    # De timer heeft zijn ingestelde tijd bereikt.
+    # Het event wordt door Home Assistant gegenereerd.
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.warme_deken_henk_off
+
+    # De bediening wordt uitgezet, bijvoorbeeld via een
+    # dashboard of een andere automatisering.
+    - trigger: state
+      entity_id: input_boolean.warme_deken_henk_enabled
+      to: 'off'
+
+  conditions:
+    # Alleen een uitschakelopdracht sturen als de stekker
+    # daadwerkelijk aanstaat. Zo voorkomen we onnodige acties.
+    - condition: state
+      entity_id: switch.deken_henk_stopcontact_1
+      state: "on"
+
+  actions:
+    # Schakel het stopcontact van de warme deken uit.
+    - action: switch.turn_off
+      target:
+        entity_id: switch.deken_henk_stopcontact_1
+
+  # Bewaar maximaal 10 traces om achteraf te kunnen
+  # onderzoeken waarom en wanneer deze automation werd gestart.
+  trace:
+    stored_traces: 10
+
+  # Voorkom dat meerdere instanties van deze automation
+  # gelijktijdig worden uitgevoerd.
+  mode: single
+
+
+# ------------------------------------------------------------
+# 2. WARME DEKEN HENK START TIMER
+#
+# Start een timer van 15 minuten zodra de slimme stekker
+# wordt ingeschakeld.
+#
+# De timer vormt de automatische uitschakeling na gebruik.
+# ------------------------------------------------------------
+# De timer wordt gestart door de stekkerautomatisering, niet rechtstreeks door de input_boolean.
+# Dat is logisch: ook als de stekker op een andere manier wordt aangezet, start de timer.
+# Houd er wel rekening mee dat het inschakelen van de stekker via de automation afhankelijk blijft van de controle of Henk thuis is.
+# ------------------------------------------------------------
+- id: 'warme_deken_henk_start_timer'
+  alias: Warme deken Henk start timer
+  initial_state: true
+  description: "En de automatisering om de timer te starten:"
+
+  triggers:
+    # Deze trigger reageert op de overgang van uit naar aan.
+    - trigger: state
+      entity_id: switch.deken_henk_stopcontact_1
+      from: 'off'
+      to: 'on'
+
+  # Als extra beveiliging...je MOET thuis zijn
+  conditions:
+    - condition: zone
+      entity_id: device_tracker.sm_s721b
+      zone: zone.home
+
+  actions:
+    # Start de timer opnieuw met een looptijd van 900 seconden.
+    # 900 seconden = 15 minuten.
+    - action: timer.start
+      data:
+        duration: '900'
+      target:
+        entity_id: timer.warme_deken_henk_off
+
+  trace:
+    stored_traces: 10
+
+  mode: single
+
+
+# ------------------------------------------------------------
+# 3. WARME DEKEN HENK CANCEL TIMER
+#
+# Als de stekker wordt uitgeschakeld, hoeft de timer niet
+# verder te lopen. Daarom wordt hij geannuleerd.
+#
+# Ook wordt de input_boolean teruggezet naar uit, zodat de
+# bediening niet ten onrechte blijft aangeven dat de deken
+# ingeschakeld is.
+# ------------------------------------------------------------
+- id: 'warme_deken_henk_cancel_timer'
+  alias: Warme deken Henk cancel timer
+  initial_state: true
+  description: "Er is nog een automatisering om de timer te annuleren als de schakelaar handmatig wordt uitgeschakeld:"
+
+  triggers:
+    # Reageert op de overgang van aan naar uit.
+    # Dit kan gebeuren door handmatig uitschakelen, door de
+    # uitschakelautomation of via een andere bediening.
+    - trigger: state
+      entity_id: switch.deken_henk_stopcontact_1
+      to: "off"
+
+  conditions: []
+
+  actions:
+    # Stop de timer: er hoeft niets meer afgeteld te worden
+    # als de deken niet meer is ingeschakeld.
+    - action: timer.cancel
+      data: {}
+      target:
+        entity_id: timer.warme_deken_henk_off
+
+    # Zet de bedieningsschakelaar terug naar uit.
+    # Hiermee blijft de bediening in overeenstemming met
+    # de uitgeschakelde stekker.
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.warme_deken_henk_enabled
+
+  trace:
+    stored_traces: 10
+
+  mode: single
+
+
+# ------------------------------------------------------------
+# 4. WARME DEKEN HENK
+#
+# Dit is de automation die het inschakelen in gang zet.
+#
+# Zodra de input_boolean wordt aangezet, controleert
+# Home Assistant of Henk thuis is.
+#
+# Alleen als Henk zich in zone.home bevindt, wordt de
+# slimme stekker ingeschakeld.
+# ------------------------------------------------------------
+- id: 'warme_deken_henk'
+  alias: Warme deken Henk
+  initial_state: true
+  description: "En ten slotte trapt een andere de hele zaak tegelijkertijd af:"
+
+  triggers:
+    # De bediening is aangezet via het dashboard of een
+    # andere automation.
+    - trigger: state
+      entity_id: input_boolean.warme_deken_henk_enabled
+      to: 'on'
+
+  conditions:
+    # Controleer de locatie van de telefoon van Henk.
+    # De automation gaat alleen verder als de telefoon zich
+    # volgens Home Assistant in zone.home bevindt.
+    #
+    # Let op: dit is afhankelijk van de beschikbaarheid en
+    # nauwkeurigheid van de gebruikte device_tracker.
+    - condition: zone
+      entity_id: device_tracker.sm_s721b
+      zone: zone.home
+
+  actions:
+    # Schakel de stekker in.
+    # Hierdoor wordt ook de automation gestart die de
+    # timer van 15 minuten instelt.
+    - action: switch.turn_on
+      target:
+        entity_id: switch.deken_henk_stopcontact_1
+
+
+# Extra uitbreiding.
+# Automation 5 vormt een extra veiligheidsmaatregel.
+# De bestaande beveiliging controleert alleen of Henk thuis is op het moment dat de warme deken wordt ingeschakeld.
+# Mocht hij daarna onverhoopt van huis vertrekken terwijl de deken nog aanstaat, dan schakelt deze automation de deken automatisch uit.
+# Zo wordt voorkomen dat de deken onnodig ingeschakeld blijft terwijl er niemand thuis is.
+
+# ============================================================
+# 5. WARME DEKEN HENK UIT BIJ VERTREK
+#
+# Zodra Henk de thuiszone verlaat, wordt de warme deken
+# uitgeschakeld, ook als de timer nog loopt.
+# ============================================================
+
+- id: 'warme_deken_henk_uit_bij_vertrek'
+  alias: Warme deken Henk uit bij vertrek
+  initial_state: true
+  description: "Schakelt de warme deken uit zodra Henk de thuiszone verlaat."
+
+  triggers:
+    - trigger: zone
+      entity_id: device_tracker.sm_s721b
+      zone: zone.home
+      event: leave
+
+  conditions:
+    - condition: state
+      entity_id: switch.deken_henk_stopcontact_1
+      state: "on"
+
+  actions:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.deken_henk_stopcontact_1
+
+  trace:
+    stored_traces: 10
+  mode: single
+

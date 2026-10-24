@@ -1,0 +1,113 @@
+# ============================================================
+# SCRIPT: EXTRA TIJD TOEVOEGEN AAN DE TIMER VAN HENK
+#
+# Doel:
+# Verleng de resterende looptijd van een actieve timer met
+# het opgegeven aantal minuten.
+#
+# Voorbeeld:
+#   Resterende tijd: 00:12:30
+#   Extra tijd:      10 minuten
+#   Nieuwe looptijd: 00:22:30
+#
+# Veiligheid:
+# Als de timer geen eindtijd heeft, wordt het script gestopt.
+# Zo wordt niet onbedoeld een nieuwe timer gestart.
+# ============================================================
+
+add_time_to_timer_henk:
+  alias: Extra tijd toevoegen aan timer Henk
+
+  sequence:
+
+    # --------------------------------------------------------
+    # STAP 1: Controleer of de timer actief is.
+    #
+    # Een actieve timer heeft een waarde voor 'finishes_at'.
+    # Zonder eindtijd kan de resterende looptijd niet worden
+    # berekend.
+    # --------------------------------------------------------
+    - if:
+        - condition: template
+          value_template: >
+            {{ state_attr(timer_entity, 'finishes_at') != none }}
+
+      then:
+
+        # ----------------------------------------------------
+        # STAP 2: Bereken de nieuwe looptijd.
+        #
+        # finishes_at = het geplande eindtijdstip
+        # now()       = het huidige tijdstip
+        #
+        # Het verschil tussen beide tijdstippen geeft het
+        # aantal seconden dat nog resteert.
+        #
+        # Vervolgens tellen we de extra minuten erbij op.
+        # ----------------------------------------------------
+        - variables:
+            remaining_seconds: >
+              {% set finish = state_attr(timer_entity, 'finishes_at') %}
+              {{ [as_timestamp(finish) - as_timestamp(now()), 0] | max | int }}
+
+            extra_seconds: >
+              {{ (minutes | int) * 60 }}
+
+        # ----------------------------------------------------
+        # STAP 3: Start de timer opnieuw met de nieuwe duur.
+        #
+        # We rekenen eerst alles om naar totale seconden.
+        # Daarna zetten we die om naar HH:MM:SS.
+        #
+        # Voorbeeld:
+        # 1350 seconden wordt 00:22:30.
+        #
+        # Door uren, minuten en seconden apart te berekenen,
+        # voorkomen we ongeldige waarden zoals 00:00:1350.
+        # ----------------------------------------------------
+        - action: timer.start
+          target:
+            entity_id: "{{ timer_entity }}"
+          data:
+            duration: >
+              {% set total = (remaining_seconds | int) + (extra_seconds | int) %}
+              {{ '%02d:%02d:%02d' | format(
+                total // 3600,
+                (total % 3600) // 60,
+                total % 60
+              ) }}
+
+      else:
+
+        # ----------------------------------------------------
+        # STAP 4: De timer heeft geen eindtijd.
+        #
+        # Stop het script in plaats van onbedoeld een nieuwe
+        # timer te starten. De foutmelding helpt bij het
+        # terugzoeken van de oorzaak in de scripttraces.
+        # ----------------------------------------------------
+        - stop: "Timer is niet actief of heeft geen eindtijd."
+          error: true
+
+  # Als het script opnieuw wordt gestart terwijl een vorige
+  # uitvoering nog loopt, wordt de vorige uitvoering
+  # afgebroken en vervangen door de nieuwe.
+  mode: restart
+
+# Hoe werkt de berekening?
+# Stel dat je timer nog 12 minuten en 30 seconden heeft en je voegt 10 minuten toe.
+# 750 seconden
+# Resterende tijd 12 × 60 + 30 = 750 seconden
+
+# Voeg de 10 minuten toe
+# 600 seconden
+# Extra tijd 10 × 60 = 600 seconden
+
+# 750 seconden en 600 seconden = 1350 seconden
+# 1350 seconden = 22 minuten en 30 seconden
+# Nieuwe looptijd 00:22:30
+
+# De timer wordt dus opnieuw gestart met de resterende tijd plus de extra minuten.
+# Je verliest niet de tijd die al op de timer stond.
+
+
