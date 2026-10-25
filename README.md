@@ -1,7 +1,6 @@
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026%2B-blue.svg)
 ![Automation](https://img.shields.io/badge/Home%20Assistant-Automation-success.svg)
 ![Script](https://img.shields.io/badge/Home%20Assistant-Script-success.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 # 🔥 Je bed voorverwarmen met een warme deken.
 
@@ -468,3 +467,13 @@ input_boolean.warme_deken_enabled
 Deze automatisering bevat meerdere beveiligingen, waaronder een maximale looptijd, aanwezigheidscontrole en een dagelijkse veiligheidsuitschakeling.
 
 De automatisering vervangt nooit de ingebouwde veiligheidsvoorzieningen van de warmtedeken zelf.
+
+## Licentie en gebruiksvoorwaarden
+
+Deze automatisering mag vrij worden gebruikt en aangepast voor eigen gebruik.
+
+Bij het publiceren, verspreiden of delen van deze deze automatisering, of van geheel of gedeeltelijk daarop gebaseerde aangepaste versies, is bronvermelding verplicht. Daarbij moet de oorspronkelijke auteur worden vermeld en moet, waar redelijkerwijs mogelijk, een verwijzing naar de oorspronkelijke repository worden opgenomen.
+
+Het is niet toegestaan deze automatisering of afgeleide versies als volledig eigen oorspronkelijk werk te presenteren zonder de oorspronkelijke auteur te erkennen.
+
+Deze automatisering wordt aangeboden zonder enige garantie. Gebruik en aanpassing geschieden op eigen risico. Voor zover wettelijk toegestaan aanvaardt de auteur geen aansprakelijkheid voor schade die voortvloeit uit het gebruik of de aanpassing ervan.
