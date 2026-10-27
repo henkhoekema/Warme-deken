@@ -18,11 +18,8 @@ De warmtedeken wordt via een slimme stekker ingeschakeld en schakelt zichzelf na
 ### Uitgeschakeld
 
 - Groene rand
-
 - Blauwe bed-icoon
-
 - Status "Uit"
-
 - Timer niet actief (Idle)
 
 ---
@@ -32,13 +29,9 @@ De warmtedeken wordt via een slimme stekker ingeschakeld en schakelt zichzelf na
 ### Ingeschakeld
 
 - Rode rand
-
 - Gele bed-icoon
-
 - Status "Aan"
-
 - Resterende tijd zichtbaar
-
 - Mogelijkheid om tijd toe te voegen of te verminderen
 
 ---
@@ -46,23 +39,14 @@ De warmtedeken wordt via een slimme stekker ingeschakeld en schakelt zichzelf na
 # Functionaliteiten
 
 - Warmtedeken inschakelen via dashboard
-
 - Alleen inschakelen wanneer je thuis bent
-
 - Automatische uitschakeling na ingestelde tijd
-
 - Handmatig uitschakelen via slimme stekker mogelijk
-
 - Timer wordt automatisch geannuleerd bij uitschakelen
-
 - Extra minuten toevoegen tijdens gebruik
-
 - Tijd verminderen tijdens gebruik
-
 - Dagelijkse veiligheidsuitschakeling om 23:59 uur
-
 - Duidelijke dashboardkaart met resterende tijd
-
 - Status van dashboard en slimme stekker blijven synchroon
 
 ---
@@ -199,7 +183,6 @@ OF wanneer het 23:59 uur is.
 ## Stap 6
 
 De Input Boolean wordt automatisch teruggezet naar Uit.
-
 Hierdoor blijft de dashboardweergave altijd overeenkomen met de werkelijke situatie.
 
 ---
@@ -207,7 +190,6 @@ Hierdoor blijft de dashboardweergave altijd overeenkomen met de werkelijke situa
 # Veiligheid
 
 Elektrische warmtedekens produceren warmte.
-
 Om risico's te beperken zijn meerdere beveiligingen ingebouwd.
 
 ---
@@ -308,7 +290,6 @@ Schakelt de slimme stekker uit wanneer:
 ## Extra tijd toevoegen
 
 Met het meegeleverde script kan extra tijd worden toegevoegd aan een actieve timer.
-
 Het script herberekent automatisch de resterende tijd.
 
 Voorbeeld:
@@ -463,9 +444,7 @@ input_boolean.warme_deken_enabled
 # Disclaimer
 
 ⚠️ Een elektrische warmtedeken produceert warmte en dient altijd gebruikt te worden volgens de instructies van de fabrikant.
-
 Deze automatisering bevat meerdere beveiligingen, waaronder een maximale looptijd, aanwezigheidscontrole en een dagelijkse veiligheidsuitschakeling.
-
 De automatisering vervangt nooit de ingebouwde veiligheidsvoorzieningen van de warmtedeken zelf.
 
 ## Licentie en gebruiksvoorwaarden
